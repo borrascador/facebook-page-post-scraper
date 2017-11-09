@@ -8,13 +8,13 @@ try:
 except ImportError:
     from urllib2 import urlopen, Request
 
-app_id = "<FILL IN>"
-app_secret = "<FILL IN>"  # DO NOT SHARE WITH ANYONE!
-group_id = "759985267390294"
+
 
 # input date formatted as YYYY-MM-DD
 since_date = ""
 until_date = ""
+
+from secret import *
 
 access_token = app_id + "|" + app_secret
 
@@ -58,34 +58,6 @@ def getFacebookPageFeedUrl(base_url):
     return url
 
 
-def getReactionsForStatuses(base_url):
-
-    reaction_types = ['like', 'love', 'wow', 'haha', 'sad', 'angry']
-    reactions_dict = {}   # dict of {status_id: tuple<6>}
-
-    for reaction_type in reaction_types:
-        fields = "&fields=reactions.type({}).limit(0).summary(total_count)".format(
-            reaction_type.upper())
-
-        url = base_url + fields
-
-        data = json.loads(request_until_succeed(url))['data']
-
-        data_processed = set()  # set() removes rare duplicates in statuses
-        for status in data:
-            id = status['id']
-            count = status['reactions']['summary']['total_count']
-            data_processed.add((id, count))
-
-        for id, count in data_processed:
-            if id in reactions_dict:
-                reactions_dict[id] = reactions_dict[id] + (count,)
-            else:
-                reactions_dict[id] = (count,)
-
-    return reactions_dict
-
-
 def processFacebookPageFeedStatus(status):
 
     # The status is now a Python dictionary, so for top-level items,
@@ -95,14 +67,9 @@ def processFacebookPageFeedStatus(status):
     # so must check for existence first
 
     status_id = status['id']
-    status_type = status['type']
 
     status_message = '' if 'message' not in status else \
         unicode_decode(status['message'])
-    link_name = '' if 'name' not in status else \
-        unicode_decode(status['name'])
-    status_link = '' if 'link' not in status else \
-        unicode_decode(status['link'])
 
     # Time needs special care since a) it's in UTC and
     # b) it's not easy to use in statistical programs.
@@ -113,28 +80,14 @@ def processFacebookPageFeedStatus(status):
         datetime.timedelta(hours=-5)  # EST
     status_published = status_published.strftime(
         '%Y-%m-%d %H:%M:%S')  # best time format for spreadsheet programs
-    status_author = unicode_decode(status['from']['name'])
 
-    # Nested items require chaining dictionary keys.
-
-    num_reactions = 0 if 'reactions' not in status else \
-        status['reactions']['summary']['total_count']
-    num_comments = 0 if 'comments' not in status else \
-        status['comments']['summary']['total_count']
-    num_shares = 0 if 'shares' not in status else status['shares']['count']
-
-    return (status_id, status_message, status_author, link_name, status_type,
-            status_link, status_published, num_reactions, num_comments, num_shares)
+    return (status_id, status_message, status_published)
 
 
 def scrapeFacebookPageFeedStatus(group_id, access_token, since_date, until_date):
     with open('{}_facebook_statuses.csv'.format(group_id), 'w') as file:
         w = csv.writer(file)
-        w.writerow(["status_id", "status_message", "status_author", "link_name",
-                    "status_type", "status_link", "status_published",
-                    "num_reactions", "num_comments", "num_shares", "num_likes",
-                    "num_loves", "num_wows", "num_hahas", "num_sads", "num_angrys",
-                    "num_special"])
+        w.writerow(["status_id", "status_message", "status_published"])
 
         has_next_page = True
         num_processed = 0   # keep a count on how many we've processed
@@ -161,12 +114,11 @@ def scrapeFacebookPageFeedStatus(group_id, access_token, since_date, until_date)
 
             url = getFacebookPageFeedUrl(base_url)
             statuses = json.loads(request_until_succeed(url))
-            reactions = getReactionsForStatuses(base_url)
 
             for status in statuses['data']:
 
                 # Ensure it is a status with the expected metadata
-                if 'reactions' in status:
+                if 'message' in status:
                     status_data = processFacebookPageFeedStatus(status)
                     reactions_data = reactions[status_data[0]]
 

@@ -1,0 +1,29 @@
+# Python Files
+*.pyc
+__pycache__
+
+# Virtualenv
+\venv
+
+# Keys
+secret.py
+
+# Swap
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-v][a-z]
+[._]sw[a-p]
+
+# Session
+Session.vim
+
+# Temporary
+.netrwhist
+*~
+
+# Auto-generated tag files
+tags
+~
+
+# OSSP CSV
+1500321840185061_facebook_statuses.csv
