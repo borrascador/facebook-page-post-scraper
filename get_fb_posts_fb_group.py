@@ -9,7 +9,6 @@ except ImportError:
     from urllib2 import urlopen, Request
 
 
-
 # input date formatted as YYYY-MM-DD
 since_date = ""
 until_date = ""
@@ -36,8 +35,8 @@ def request_until_succeed(url):
 
     return response.read()
 
-# Needed to write tricky unicode correctly to csv
 
+# Needed to write tricky unicode correctly to csv
 
 def unicode_decode(text):
     try:
@@ -50,9 +49,7 @@ def getFacebookPageFeedUrl(base_url):
 
     # Construct the URL string; see http://stackoverflow.com/a/37239851 for
     # Reactions parameters
-    fields = "&fields=message,link,created_time,type,name,id," + \
-        "comments.limit(0).summary(true),shares,reactions" + \
-        ".limit(0).summary(true),from"
+    fields = "&fields=message,created_time,id"
     url = base_url + fields
 
     return url
@@ -120,11 +117,6 @@ def scrapeFacebookPageFeedStatus(group_id, access_token, since_date, until_date)
                 # Ensure it is a status with the expected metadata
                 if 'message' in status:
                     status_data = processFacebookPageFeedStatus(status)
-                    reactions_data = reactions[status_data[0]]
-
-                    # calculate thankful/pride through algebra
-                    num_special = status_data[7] - sum(reactions_data)
-                    w.writerow(status_data + reactions_data + (num_special,))
 
                 # output progress occasionally to make sure code is not
                 # stalling
