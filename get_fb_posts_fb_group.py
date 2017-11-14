@@ -117,6 +117,7 @@ def scrapeFacebookPageFeedStatus(group_id, access_token, since_date, until_date)
                 # Ensure it is a status with the expected metadata
                 if 'message' in status:
                     status_data = processFacebookPageFeedStatus(status)
+                    w.writerow(status_data)
 
                 # output progress occasionally to make sure code is not
                 # stalling
